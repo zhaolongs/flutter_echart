@@ -1,6 +1,7 @@
 name: flutter_echart
 description: Flutter 饼状图、柱状图、拆线图
-version: 1.0.0
+version: 1.0.1
+homepage: https://github.com/zhaolongs/flutter_echart.git
 
 
 environment:

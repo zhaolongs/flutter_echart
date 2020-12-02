@@ -55,7 +55,7 @@ class PieChatWidget extends StatefulWidget {
   PieChatWidget({
     Key key,
     @required this.dataList,
-    this.initSelect =0,
+    this.initSelect = 0,
     this.clickCallBack,
     this.loopType = LoopType.NON,
     this.openType = OpenType.ANI,
@@ -231,6 +231,15 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
   bool _isUpdate = false;
 
   Stack buildStack() {
+
+    Widget mainItemWidget = Container();
+    if(widget.loopType==LoopType.NON){
+      mainItemWidget = buildCustomPaint();
+    }else{
+      mainItemWidget =buildGestureDetector();
+    }
+
+
     return Stack(
 //子 Widget 居中
       alignment: Alignment.center,
@@ -264,122 +273,137 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
                     ])
               : null,
           //开始绘制神操作
-          child: GestureDetector(
-            onTapDown: (TapDownDetails details) {
-              initSelect = -1;
-              _isDown = true;
-              _loopAnimationController.stop();
-              setState(() {
-                ///相对于父组件的位置
-                Offset localPosition = details.localPosition;
-                _downY = localPosition.dy;
-                _downX = localPosition.dx;
-                _isMove = false;
-                // print("onTapDown $_downX");
-                setState(() {});
-              });
-            },
-            onPanStart: (DragStartDetails details) {
-              Offset localPosition = details.localPosition;
-              double y = localPosition.dy;
-              double x = localPosition.dx;
-
-              print("onPanStart $_downX");
-            },
-            onPanUpdate: (DragUpdateDetails details) {
-              Offset localPosition = details.localPosition;
-              double dx = localPosition.dx;
-              double dy = localPosition.dy;
-
-              if (widget.loopType == LoopType.DOWN_LOOP) {
-                _downY = dy;
-                _downX = dx;
-
-                _isMove = true;
-                setState(() {});
-              } else if (widget.loopType == LoopType.AUTO_LOOP ||
-                  widget.loopType == LoopType.MOVE) {
-                _downY = dy;
-                _downX = dx;
-                _isMove = false;
-                setState(() {});
-              }
-            },
-            onTapUp: (TapUpDetails details) {
-              _isUpdate = true;
-              Offset localPosition = details.localPosition;
-              if (widget.loopType == LoopType.AUTO_LOOP) {
-                _loopAnimationController.repeat();
-              }
-              _isDown = false;
-            },
-            onPanCancel: () {
-              if (widget.loopType == LoopType.AUTO_LOOP) {
-                _loopAnimationController.repeat();
-              }
-            },
-            onPanEnd: (DragEndDetails details) {
-              if (widget.loopType == LoopType.AUTO_LOOP) {
-                _loopAnimationController.repeat();
-              }
-            },
-            child: CustomPaint(
-              size: MediaQuery.of(context).size,
-              painter: CustomShapPainter(
-                _dataList,
-                initSelect:initSelect,
-                pieProgress: _progressAnimation.value,
-                lineProgress: _lineAnimationController.value,
-                downX: _downX,
-                downY: _downY,
-                loopType: widget.loopType,
-                startRadin: golbalStart,
-                isDrawLine: widget.isLineText,
-                isDrawHelper: widget.isHelperLine,
-                isMove: _isMove,
-                clickCallBack: (int value) {
-                  currentSelect = value;
-                  PieLogUtils.logPrint("点击回调 $value");
-
-                  SchedulerBinding.instance
-                      .addPostFrameCallback((Duration timeStamp) {
-                    PieLogUtils.logPrint("刷新 $_isUpdate");
-                    if (widget.isFrontgText && _isUpdate) {
-                      _isUpdate = false;
-                      setState(() {});
-                    }
-                    if (widget.clickCallBack != null && _isUpdate) {
-                      widget.clickCallBack(value);
-                    }
-                  });
-                },
-              ),
-            ),
-          ),
+          child: mainItemWidget,
         ),
         //第二层
-        Container(
-          width: 80,
-          decoration: BoxDecoration(
-            color: widget.bgColor,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                  spreadRadius: 3 * _numberAnimation.value,
-                  blurRadius: 5 * _numberAnimation.value,
-                  offset: Offset(
-                      5 * _numberAnimation.value, 5 * _numberAnimation.value),
-                  color: Colors.black54),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              "${_dataList[currentSelect].title}",
-              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-            ),
-          ),
-        ),
+        buildFrontTextContainer(),
       ],
+    );
+  }
+
+  GestureDetector buildGestureDetector() {
+    return GestureDetector(
+          onTapDown: (TapDownDetails details) {
+            initSelect = -1;
+            _isDown = true;
+            _loopAnimationController.stop();
+            setState(() {
+              ///相对于父组件的位置
+              Offset localPosition = details.localPosition;
+              _downY = localPosition.dy;
+              _downX = localPosition.dx;
+              _isMove = false;
+              // print("onTapDown $_downX");
+              setState(() {});
+            });
+          },
+          onPanStart: (DragStartDetails details) {
+            Offset localPosition = details.localPosition;
+            double y = localPosition.dy;
+            double x = localPosition.dx;
+
+            print("onPanStart $_downX");
+          },
+          onPanUpdate: (DragUpdateDetails details) {
+            Offset localPosition = details.localPosition;
+            double dx = localPosition.dx;
+            double dy = localPosition.dy;
+
+            if (widget.loopType == LoopType.DOWN_LOOP) {
+              _downY = dy;
+              _downX = dx;
+
+              _isMove = true;
+              setState(() {});
+            } else if (widget.loopType == LoopType.AUTO_LOOP ||
+                widget.loopType == LoopType.MOVE) {
+              _downY = dy;
+              _downX = dx;
+              _isMove = false;
+              setState(() {});
+            }
+          },
+          onTapUp: (TapUpDetails details) {
+            _isUpdate = true;
+            Offset localPosition = details.localPosition;
+            if (widget.loopType == LoopType.AUTO_LOOP) {
+              _loopAnimationController.repeat();
+            }
+            _isDown = false;
+          },
+          onPanCancel: () {
+            if (widget.loopType == LoopType.AUTO_LOOP) {
+              _loopAnimationController.repeat();
+            }
+          },
+          onPanEnd: (DragEndDetails details) {
+            if (widget.loopType == LoopType.AUTO_LOOP) {
+              _loopAnimationController.repeat();
+            }
+          },
+          child: buildCustomPaint(),
+        );
+  }
+
+  CustomPaint buildCustomPaint() {
+    return CustomPaint(
+            size: MediaQuery.of(context).size,
+            painter: CustomShapPainter(
+              _dataList,
+              initSelect: initSelect,
+              pieProgress: _progressAnimation.value,
+              lineProgress: _lineAnimationController.value,
+              downX: _downX,
+              downY: _downY,
+              loopType: widget.loopType,
+              startRadin: golbalStart,
+              isDrawLine: widget.isLineText,
+              isDrawHelper: widget.isHelperLine,
+              isMove: _isMove,
+              clickCallBack: (int value) {
+                currentSelect = value;
+                PieLogUtils.logPrint("点击回调 $value");
+
+                SchedulerBinding.instance
+                    .addPostFrameCallback((Duration timeStamp) {
+                  PieLogUtils.logPrint("刷新 $_isUpdate");
+                  if (widget.isFrontgText && _isUpdate) {
+                    _isUpdate = false;
+                    setState(() {});
+                  }
+                  if (widget.clickCallBack != null && _isUpdate) {
+                    widget.clickCallBack(value);
+                  }
+                });
+              },
+            ),
+          );
+  }
+
+  Container buildFrontTextContainer() {
+    if (!widget.isFrontgText) {
+      return Container();
+    }
+    return Container(
+      width: 80,
+      decoration: BoxDecoration(
+        color: widget.bgColor,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+              spreadRadius: 3 * _numberAnimation.value,
+              blurRadius: 5 * _numberAnimation.value,
+              offset: Offset(
+                  5 * _numberAnimation.value, 5 * _numberAnimation.value),
+              color: Colors.black54),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          "${_dataList[currentSelect].title}",
+          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+        ),
+      ),
     );
   }
 
@@ -404,10 +428,10 @@ class CustomShapPainter extends CustomPainter {
   CustomShapPainter(this.list,
       {this.pieProgress,
       this.lineProgress,
-        this.initSelect=-1,
+      this.initSelect = -1,
       this.downX = 0.0,
       this.downY = 0.0,
-      this.loopType = LoopType.NON,
+      this.loopType = LoopType.DOWN,
       this.isMove,
       this.startRadin = 0.0,
       this.isDrawLine = true,
@@ -511,15 +535,18 @@ class CustomShapPainter extends CustomPainter {
 
       double tagRadius = radius;
 
-      if (initSelect==-1&&!isMove &&
-          calculatorDegree2 > (startRadin - golbalStart) &&
-          calculatorDegree2 <= (endRadin - golbalStart)) {
-        tagRadius += 10;
-        currentSelect = i;
-      }else{
-        if(i==initSelect){
+      if(initSelect!=-2) {
+        if (initSelect == -1 &&
+            !isMove &&
+            calculatorDegree2 > (startRadin - golbalStart) &&
+            calculatorDegree2 <= (endRadin - golbalStart)) {
           tagRadius += 10;
           currentSelect = i;
+        } else {
+          if (i == initSelect) {
+            tagRadius += 10;
+            currentSelect = i;
+          }
         }
       }
 

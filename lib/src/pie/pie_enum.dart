@@ -22,8 +22,10 @@ enum OpenType {
 
 //饼图交互
 enum LoopType {
-  //按下时放大
+  //无交互
   NON,
+  //按下时放大
+  DOWN,
   //按下移动放大
   MOVE,
   //按下旋转
