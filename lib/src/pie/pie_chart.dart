@@ -531,6 +531,9 @@ class CustomShapPainter extends CustomPainter {
       //计算弧度
       double sweepRadin = flag * 2 * pi * pieProgress;
 
+      //计算百分比
+      double unitNumber = entity.number/total;
+
       double endRadin = startRadin + sweepRadin;
 
       double tagRadius = radius;
@@ -558,7 +561,7 @@ class CustomShapPainter extends CustomPainter {
 
       if (isDrawLine) {
         _drawLineAndText(canvas, startRadin + sweepRadin / 2, sweepRadin,
-            tagRadius, entity.title, entity.color);
+            tagRadius, entity.title, entity.color,unitNumber);
       }
 
       startRadin += sweepRadin;
@@ -586,7 +589,7 @@ class CustomShapPainter extends CustomPainter {
   }
 
   void _drawLineAndText(Canvas canvas, double currentAngle, double angle,
-      double r, String name, Color color) {
+      double r, String name, Color color,double unitNumber) {
 // 绘制横线
 // 1，计算开始坐标和转折点坐标
     var startX = r * (cos(currentAngle));
@@ -636,7 +639,7 @@ class CustomShapPainter extends CustomPainter {
 
 // 绘制上方百分比，步骤同上
 // todo 保留2为小数，确保精准度
-    var per = (angle / 360.0 * 100).toStringAsFixed(2) + "%";
+    var per =  "${(unitNumber*100).round().toInt()}%";
 
     var tpPre = _newVerticalAxisTextPainter(per, color);
     tpPre.layout();
