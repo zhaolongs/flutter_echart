@@ -19,12 +19,17 @@ import '../e_log.dart';
 
 class EChatWidget extends StatelessWidget {
   final ChartType chartType;
+  final List<EChartPieBean> dataList;
 
-  EChatWidget({Key key, this.chartType = ChartType.PIE}) : super(key: key);
+  EChatWidget(
+      {Key? key, this.chartType = ChartType.PIE, required this.dataList})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return PieChatWidget();
+    return PieChatWidget(
+      dataList: dataList,
+    );
   }
 }
 
@@ -50,11 +55,11 @@ class PieChatWidget extends StatefulWidget {
   //是否显示前景文案
   final bool isFrontgText;
 
-  final Function(int index) clickCallBack;
+  final Function(int index)? clickCallBack;
 
   PieChatWidget({
-    Key key,
-    @required this.dataList,
+    Key? key,
+    required this.dataList,
     this.initSelect = 0,
     this.clickCallBack,
     this.loopType = LoopType.NON,
@@ -76,22 +81,20 @@ class PieChatWidget extends StatefulWidget {
 
 class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
   //来个动画控制器
-  AnimationController _animationController;
-  AnimationController _lineAnimationController;
-  AnimationController _loopAnimationController;
+  late AnimationController _animationController;
+  late AnimationController _lineAnimationController;
+  late AnimationController _loopAnimationController;
 
   //控制背景抬高使用的
-  Animation<double> _bgAnimation;
+  late Animation<double> _bgAnimation;
 
   //控制饼图使用的
-  Animation<double> _progressAnimation;
+  late Animation<double> _progressAnimation;
 
   //控制数字使用的
-  Animation<double> _numberAnimation;
+  late Animation<double> _numberAnimation;
 
-  List<EChartPieBean> _dataList;
-
-  int initSelect;
+  int initSelect = 0;
 
   @override
   void initState() {
@@ -99,11 +102,6 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
 
     initSelect = widget.initSelect;
 
-    if (widget.dataList == null) {
-      _dataList = defaultList;
-    } else {
-      _dataList = widget.dataList;
-    }
     PieLogUtils.isLog = widget.isLog;
     //初始化一下
     _animationController = new AnimationController(
@@ -191,10 +189,12 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
     });
 
     if (widget.openType == OpenType.ANI) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        PieLogUtils.logPrint("开始执行动画");
-        _animationController.forward();
-      });
+      if (WidgetsBinding.instance != null) {
+        WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+          PieLogUtils.logPrint("开始执行动画");
+          _animationController.forward();
+        });
+      }
     } else {
       _animationController.value = 1.0;
     }
@@ -231,14 +231,12 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
   bool _isUpdate = false;
 
   Stack buildStack() {
-
     Widget mainItemWidget = Container();
-    if(widget.loopType==LoopType.NON){
+    if (widget.loopType == LoopType.NON) {
       mainItemWidget = buildCustomPaint();
-    }else{
-      mainItemWidget =buildGestureDetector();
+    } else {
+      mainItemWidget = buildGestureDetector();
     }
-
 
     return Stack(
 //子 Widget 居中
@@ -261,7 +259,7 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
                       ),
                       BoxShadow(
                         //模糊颜色
-                        color: Colors.blue[300].withOpacity(0.3),
+                        color: Colors.blue[300]!.withOpacity(0.3),
                         //模糊半径
                         spreadRadius: 2 * _bgAnimation.value,
                         //阴影偏移量
@@ -283,101 +281,100 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
 
   GestureDetector buildGestureDetector() {
     return GestureDetector(
-          onTapDown: (TapDownDetails details) {
-            initSelect = -1;
-            _isDown = true;
-            _loopAnimationController.stop();
-            setState(() {
-              ///相对于父组件的位置
-              Offset localPosition = details.localPosition;
-              _downY = localPosition.dy;
-              _downX = localPosition.dx;
-              _isMove = false;
-              // print("onTapDown $_downX");
-              setState(() {});
-            });
-          },
-          onPanStart: (DragStartDetails details) {
-            Offset localPosition = details.localPosition;
-            double y = localPosition.dy;
-            double x = localPosition.dx;
+      onTapDown: (TapDownDetails details) {
+        initSelect = -1;
+        _isDown = true;
+        _loopAnimationController.stop();
+        setState(() {
+          ///相对于父组件的位置
+          Offset localPosition = details.localPosition;
+          _downY = localPosition.dy;
+          _downX = localPosition.dx;
+          _isMove = false;
+          // print("onTapDown $_downX");
+          setState(() {});
+        });
+      },
+      onPanStart: (DragStartDetails details) {
+        Offset localPosition = details.localPosition;
+        double y = localPosition.dy;
+        double x = localPosition.dx;
 
-            print("onPanStart $_downX");
-          },
-          onPanUpdate: (DragUpdateDetails details) {
-            Offset localPosition = details.localPosition;
-            double dx = localPosition.dx;
-            double dy = localPosition.dy;
+        print("onPanStart $_downX");
+      },
+      onPanUpdate: (DragUpdateDetails details) {
+        Offset localPosition = details.localPosition;
+        double dx = localPosition.dx;
+        double dy = localPosition.dy;
 
-            if (widget.loopType == LoopType.DOWN_LOOP) {
-              _downY = dy;
-              _downX = dx;
+        if (widget.loopType == LoopType.DOWN_LOOP) {
+          _downY = dy;
+          _downX = dx;
 
-              _isMove = true;
-              setState(() {});
-            } else if (widget.loopType == LoopType.AUTO_LOOP ||
-                widget.loopType == LoopType.MOVE) {
-              _downY = dy;
-              _downX = dx;
-              _isMove = false;
-              setState(() {});
-            }
-          },
-          onTapUp: (TapUpDetails details) {
-            _isUpdate = true;
-            Offset localPosition = details.localPosition;
-            if (widget.loopType == LoopType.AUTO_LOOP) {
-              _loopAnimationController.repeat();
-            }
-            _isDown = false;
-          },
-          onPanCancel: () {
-            if (widget.loopType == LoopType.AUTO_LOOP) {
-              _loopAnimationController.repeat();
-            }
-          },
-          onPanEnd: (DragEndDetails details) {
-            if (widget.loopType == LoopType.AUTO_LOOP) {
-              _loopAnimationController.repeat();
-            }
-          },
-          child: buildCustomPaint(),
-        );
+          _isMove = true;
+          setState(() {});
+        } else if (widget.loopType == LoopType.AUTO_LOOP ||
+            widget.loopType == LoopType.MOVE) {
+          _downY = dy;
+          _downX = dx;
+          _isMove = false;
+          setState(() {});
+        }
+      },
+      onTapUp: (TapUpDetails details) {
+        _isUpdate = true;
+        Offset localPosition = details.localPosition;
+        if (widget.loopType == LoopType.AUTO_LOOP) {
+          _loopAnimationController.repeat();
+        }
+        _isDown = false;
+      },
+      onPanCancel: () {
+        if (widget.loopType == LoopType.AUTO_LOOP) {
+          _loopAnimationController.repeat();
+        }
+      },
+      onPanEnd: (DragEndDetails details) {
+        if (widget.loopType == LoopType.AUTO_LOOP) {
+          _loopAnimationController.repeat();
+        }
+      },
+      child: buildCustomPaint(),
+    );
   }
 
   CustomPaint buildCustomPaint() {
     return CustomPaint(
-            size: MediaQuery.of(context).size,
-            painter: CustomShapPainter(
-              _dataList,
-              initSelect: initSelect,
-              pieProgress: _progressAnimation.value,
-              lineProgress: _lineAnimationController.value,
-              downX: _downX,
-              downY: _downY,
-              loopType: widget.loopType,
-              startRadin: golbalStart,
-              isDrawLine: widget.isLineText,
-              isDrawHelper: widget.isHelperLine,
-              isMove: _isMove,
-              clickCallBack: (int value) {
-                currentSelect = value;
-                PieLogUtils.logPrint("点击回调 $value");
+      size: MediaQuery.of(context).size,
+      painter: CustomShapPainter(
+        widget.dataList,
+        initSelect: initSelect,
+        pieProgress: _progressAnimation.value,
+        lineProgress: _lineAnimationController.value,
+        downX: _downX,
+        downY: _downY,
+        loopType: widget.loopType,
+        startRadin: golbalStart,
+        isDrawLine: widget.isLineText,
+        isDrawHelper: widget.isHelperLine,
+        isMove: _isMove,
+        clickCallBack: (int value) {
+          currentSelect = value;
+          PieLogUtils.logPrint("点击回调 $value");
 
-                SchedulerBinding.instance
-                    .addPostFrameCallback((Duration timeStamp) {
-                  PieLogUtils.logPrint("刷新 $_isUpdate");
-                  if (widget.isFrontgText && _isUpdate) {
-                    _isUpdate = false;
-                    setState(() {});
-                  }
-                  if (widget.clickCallBack != null && _isUpdate) {
-                    widget.clickCallBack(value);
-                  }
-                });
-              },
-            ),
-          );
+          SchedulerBinding.instance!.addPostFrameCallback((Duration timeStamp) {
+            PieLogUtils.logPrint("刷新 $_isUpdate");
+            if (widget.isFrontgText && _isUpdate) {
+              _isUpdate = false;
+              setState(() {});
+            }
+            if (widget.clickCallBack != null && _isUpdate) {
+              widget.clickCallBack!(value);
+            }
+          });
+        },
+      ),
+    );
   }
 
   Container buildFrontTextContainer() {
@@ -400,7 +397,7 @@ class _PieChatState extends State<PieChatWidget> with TickerProviderStateMixin {
       ),
       child: Center(
         child: Text(
-          "${_dataList[currentSelect].title}",
+          "${widget.dataList[currentSelect].title}",
           style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
         ),
       ),
@@ -417,7 +414,7 @@ class CustomShapPainter extends CustomPainter {
 //数据内容
   List<EChartPieBean> list;
 
-  Function(int index) clickCallBack;
+  Function(int index)? clickCallBack;
   double pieProgress;
   double lineProgress;
   bool isDrawLine;
@@ -426,13 +423,13 @@ class CustomShapPainter extends CustomPainter {
   int initSelect;
 
   CustomShapPainter(this.list,
-      {this.pieProgress,
-      this.lineProgress,
+      {required this.pieProgress,
+      required this.lineProgress,
       this.initSelect = -1,
       this.downX = 0.0,
       this.downY = 0.0,
       this.loopType = LoopType.DOWN,
-      this.isMove,
+      this.isMove = false,
       this.startRadin = 0.0,
       this.isDrawLine = true,
       this.isDrawHelper = false,
@@ -455,7 +452,7 @@ class CustomShapPainter extends CustomPainter {
   bool isLog;
 
   bool isMove;
-  double radius;
+  double radius = 0;
   double line1 = 0.0;
   double line2 = 0.0;
   double startRadin = 0.0;
@@ -532,13 +529,13 @@ class CustomShapPainter extends CustomPainter {
       double sweepRadin = flag * 2 * pi * pieProgress;
 
       //计算百分比
-      double unitNumber = entity.number/total;
+      double unitNumber = entity.number / total;
 
       double endRadin = startRadin + sweepRadin;
 
       double tagRadius = radius;
 
-      if(initSelect!=-2) {
+      if (initSelect != -2) {
         if (initSelect == -1 &&
             !isMove &&
             calculatorDegree2 > (startRadin - golbalStart) &&
@@ -561,7 +558,7 @@ class CustomShapPainter extends CustomPainter {
 
       if (isDrawLine) {
         _drawLineAndText(canvas, startRadin + sweepRadin / 2, sweepRadin,
-            tagRadius, entity.title, entity.color,unitNumber);
+            tagRadius, entity.title, entity.color, unitNumber);
       }
 
       startRadin += sweepRadin;
@@ -577,7 +574,7 @@ class CustomShapPainter extends CustomPainter {
 
     if (pieProgress >= 1.0) {
       if (clickCallBack != null) {
-        clickCallBack(currentSelect);
+        clickCallBack!(currentSelect);
       }
     }
   }
@@ -589,7 +586,7 @@ class CustomShapPainter extends CustomPainter {
   }
 
   void _drawLineAndText(Canvas canvas, double currentAngle, double angle,
-      double r, String name, Color color,double unitNumber) {
+      double r, String name, Color color, double unitNumber) {
 // 绘制横线
 // 1，计算开始坐标和转折点坐标
     var startX = r * (cos(currentAngle));
@@ -639,7 +636,7 @@ class CustomShapPainter extends CustomPainter {
 
 // 绘制上方百分比，步骤同上
 // todo 保留2为小数，确保精准度
-    var per =  "${(unitNumber*100).round().toInt()}%";
+    var per = "${(unitNumber * 100).round().toInt()}%";
 
     var tpPre = _newVerticalAxisTextPainter(per, color);
     tpPre.layout();
